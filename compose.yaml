@@ -1,0 +1,66 @@
+name: wowtowav
+
+# No host ports. Streamlit shares the Tailscale sidecar network namespace
+# and is reached only via Tailscale Funnel on loopback.
+#
+#   https://wowtowav.tailcc00e1.ts.net
+
+services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: wowtowav-tailscale
+    hostname: wowtowav
+    restart: unless-stopped
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_HOSTNAME: wowtowav
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ts-state:/var/lib/tailscale
+      - ./ts-serve.json:/config/serve.json:ro
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build: .
+    image: wowtowav:latest
+    container_name: wowtowav
+    restart: unless-stopped
+    network_mode: service:tailscale
+    depends_on:
+      tailscale:
+        condition: service_started
+        restart: true
+    security_opt:
+      - no-new-privileges:true
+    cpus: 1.0
+    mem_limit: 1g
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  ts-state:

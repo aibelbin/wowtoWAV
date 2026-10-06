@@ -1,0 +1,22 @@
+[project]
+name = "wowtowav"
+version = "0.1.0"
+description = "Convert any audio upload to 16 kHz mono WAV"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "imageio-ffmpeg>=0.5",
+    "python-multipart>=0.0.12",
+    "streamlit>=1.40",
+    "uvicorn>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.27",
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
